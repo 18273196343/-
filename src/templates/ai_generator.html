@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AI 故事创作中心</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;width:100%;overflow:hidden;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif;background:#F0F4F8;color:#2C3E50;}
+.container{width:100%;height:100vh;max-width:none;margin:0;padding:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.card{background:#fff;border-radius:12px;padding:15px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.step-title{font-size:16px;font-weight:bold;color:#1565C0;margin-bottom:12px;padding:8px 12px;background:#E3F2FD;border-radius:6px;}
+.mode-tabs{display:flex;gap:8px;margin-bottom:12px;}
+.mode-tab{flex:1;padding:12px 8px;border:2px solid #E0E0E0;border-radius:8px;text-align:center;cursor:pointer;background:#fff;transition:.3s;font-size:14px;}
+.mode-tab.active{border-color:#1976D2;background:#E3F2FD;color:#1976D2;font-weight:bold;}
+.mode-tab:hover:not(.active){border-color:#90CAF9;}
+textarea{width:100%;min-height:100px;padding:12px;border:2px solid #E0E0E0;border-radius:8px;font-size:15px;resize:vertical;margin-bottom:12px;}
+textarea:focus{outline:none;border-color:#1976D2;}
+select{width:100%;padding:12px;border:2px solid #FFCA28;border-radius:8px;font-size:15px;margin-bottom:12px;}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-size:17px;font-weight:bold;cursor:pointer;color:#fff;transition:.3s;min-height:48px;}
+.btn-blue{background:#1976D2;} .btn-blue:hover{background:#1565C0;}
+.btn-orange{background:#FF8F00;} .btn-orange:hover{background:#FF6F00;}
+.btn-green{background:#43A047;} .btn-green:hover{background:#388E3C;}
+.btn-grey{background:#78909C;} .btn-grey:hover{background:#607D8B;}
+.hidden{display:none!important;}
+.progress-box{text-align:center;padding:20px;}
+.progress-bar{width:100%;height:22px;background:#E0E0E0;border-radius:11px;overflow:hidden;margin:15px 0;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#29B6F6,#1976D2);border-radius:11px;transition:width .3s;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:14px;}
+.progress-text{color:#78909C;margin-top:8px;font-size:14px;}
+.form-group{margin-bottom:12px;}
+.form-group label{display:block;font-weight:bold;color:#37474F;margin-bottom:4px;font-size:14px;}
+.form-group input,.form-group textarea{width:100%;padding:10px;border:1px solid #CFD8DC;border-radius:6px;font-size:14px;}
+.scene-box{background:#FAFAFA;border:1px solid #E0E0E0;border-radius:8px;padding:12px;margin-bottom:8px;}
+.scene-box h4{color:#1565C0;margin-bottom:8px;font-size:15px;}
+.tag{display:inline-block;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:bold;margin:2px;}
+.tag-bg{background:#E8F5E9;color:#2E7D32;border:1px solid #2E7D32;}
+.tag-char{background:#FFF3E0;color:#E65100;border:1px solid #E65100;}
+.tag-avatar{background:#F3E5F5;color:#6A1B9A;border:1px solid #6A1B9A;}
+.tag-unknown{background:#ECEFF1;color:#37474F;border:1px solid #37474F;}
+.upload-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #E0E0E0;}
+.upload-row span{flex:1;font-weight:bold;color:#37474F;font-size:14px;word-break:break-all;}
+.upload-status{color:#E53935;font-size:12px;}
+.upload-status.done{color:#2E7D32;}
+.summary{background:#F4FBFF;border:1px solid #BBDEFB;border-radius:10px;padding:15px;margin-bottom:15px;}
+.editor-tabs{display:flex;border-bottom:2px solid #CFD8DC;margin-bottom:12px;}
+.editor-tab{padding:10px 15px;cursor:pointer;font-weight:bold;color:#546E7A;border-bottom:3px solid transparent;transition:.2s;font-size:14px;}
+.editor-tab.active{color:#2E7D32;border-bottom-color:#2E7D32;}
+.editor-tab:hover{color:#1565C0;}
+.json-editor{width:100%;min-height:300px;padding:12px;background:#2D2D30;color:#CE9178;font-family:Consolas,monospace;font-size:12px;border:1px solid #555;border-radius:8px;resize:vertical;}
+.json-editor:focus{outline:none;border-color:#4FC3F7;}
+.stream-console{width:100%;min-height:120px;max-height:200px;overflow-y:auto;padding:10px;background:#1E1E1E;color:#00E676;font-family:Consolas,monospace;font-size:12px;border-radius:8px;margin-top:12px;border:1px solid #333;}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- 步骤1 -->
+<div class="card" id="step1">
+  <div class="step-title">🎯 步骤 1/3：选择创作模式</div>
+  <div class="mode-tabs">
+    <div class="mode-tab active" onclick="switchMode('custom',this)">
+      <div style="font-size:24px">📝</div>
+      <div>大纲定制</div>
+      <small style="color:#78909C">输入想法，AI扩充</small>
+    </div>
+    <div class="mode-tab" onclick="switchMode('blind',this)">
+      <div style="font-size:24px">🎲</div>
+      <div>灵感盲盒</div>
+      <small style="color:#78909C">选题材，全自动</small>
+    </div>
+  </div>
+
+  <div id="panel-custom">
+    <textarea id="promptText" placeholder="例如：在赛博朋克都市中，赏金猎人零号接到了一份神秘委托..."></textarea>
+  </div>
+  <div id="panel-blind" class="hidden">
+    <select id="genreSelect">
+      <option>传统武侠</option>
+      <option>中式悬疑(规则怪谈)</option>
+      <option>赛博朋克科幻</option>
+      <option>西方奇幻冒险</option>
+      <option>现代都市恋爱</option>
+      <option>末日废土求生</option>
+    </select>
+  </div>
+
+  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:15px">
+    <input type="checkbox" id="autoBGM" checked> <span>🎵 AI 自动配置 BGM 名称</span>
+  </label>
+
+  <div style="margin-bottom:15px">
+    <input type="file" id="bgmFile" accept="audio/*" style="display:none" onchange="onBGM(this)">
+    <button class="btn btn-grey" style="height:auto;padding:10px" onclick="document.getElementById('bgmFile').click()">📁 上传本地 BGM</button>
+    <span id="bgmLabel" style="color:#78909C;margin-left:10px">未选择</span>
+  </div>
+
+  <button class="btn btn-blue" onclick="startGen()">✍️ 开始构思剧本</button>
+</div>
+
+<!-- 生成中 -->
+<div class="card hidden" id="stepLoading">
+  <div class="progress-box">
+    <h2 style="color:#1976D2;margin-bottom:20px">🧠 AI 编剧正在构思剧本...</h2>
+    <div class="progress-bar"><div class="progress-fill" id="pFill" style="width:0%">0%</div></div>
+    <div class="progress-text" id="pText">正在连接 AI 服务...</div>
+    <div class="stream-console" id="streamConsole"></div>
+  </div>
+</div>
+
+<!-- 步骤2 -->
+<div class="card hidden" id="step2">
+  <div class="step-title" style="background:#E8F5E9;color:#2E7D32">✅ 步骤 2/3：剧本已生成！请核对与修改</div>
+  <div class="editor-tabs">
+    <div class="editor-tab active" onclick="switchEditorTab(0,this)">🖥️ 智能剧情表单 (推荐)</div>
+    <div class="editor-tab" onclick="switchEditorTab(1,this)">⚙️ JSON 源码 (高级)</div>
+  </div>
+  <div id="editorVisual">
+    <div style="max-height:500px;overflow-y:auto">
+      <div class="form-group"><label>📜 故事标题</label><input type="text" id="eTitle"></div>
+      <div class="form-group"><label>📝 故事简介</label><input type="text" id="eDesc"></div>
+      <div id="sceneBox"></div>
+    </div>
+  </div>
+  <div id="editorJSON" class="hidden">
+    <textarea class="json-editor" id="jsonEditor" spellcheck="false"></textarea>
+  </div>
+  <button class="btn btn-blue" onclick="toStep3()" style="margin-top:15px">➡️ 下一步：确认剧情，配置美术资源</button>
+</div>
+
+<!-- 步骤3 -->
+<div class="card hidden" id="step3">
+  <div class="step-title" style="background:#FBE9E7;color:#D84315">✅ 步骤 3/3：配置美术资源</div>
+  <div class="summary" id="imgSum"></div>
+  <div id="blindTip" class="hidden" style="background:#FFF8E1;border:1px dashed #FFCA28;padding:15px;border-radius:6px;color:#E65100;font-weight:bold;margin-bottom:15px">
+    ✨ 当前为【盲盒模式】，所有资产将由 AI 全自动绘制
+  </div>
+  <div id="manualBox" class="hidden">
+    <div style="margin-bottom:15px">
+      <label style="font-weight:bold;color:#37474F">图片来源：</label>
+      <select id="artMode" onchange="toggleManual()" style="padding:10px;border-radius:6px;border:2px solid #1976D2">
+        <option value="ai">🤖 全部交由 AI 自动绘制 (推荐)</option>
+        <option value="manual">📁 全部由我手动配置本地图片</option>
+      </select>
+    </div>
+    <div id="upList"></div>
+  </div>
+  <div style="display:flex;gap:15px;margin-top:20px">
+    <button class="btn btn-grey" style="flex:1" onclick="back2()">⬅️ 返回修改</button>
+    <button class="btn btn-green" style="flex:2" onclick="pack()">🚀 开始生成项目</button>
+  </div>
+</div>
+
+<!-- 图片生成中 -->
+<div class="card hidden" id="stepImg">
+  <div class="progress-box">
+    <h2 style="color:#D84315;margin-bottom:20px">🎨 AI 画师正在绘制...</h2>
+    <div class="progress-bar"><div class="progress-fill" id="iFill" style="width:0%;background:linear-gradient(90deg,#FF7043,#D84315)">0%</div></div>
+    <div class="progress-text" id="iText">准备绘制...</div>
+  </div>
+</div>
+
+<!-- 完成 -->
+<div class="card hidden" id="stepDone">
+  <div style="text-align:center;padding:40px">
+    <div style="font-size:64px;margin-bottom:20px">🎉</div>
+    <h2 style="color:#43A047;margin-bottom:15px">大功告成！</h2>
+    <p id="doneMsg" style="color:#607D8B;font-size:16px;margin-bottom:30px"></p>
+    <button class="btn btn-green" onclick="location.href='/'">🏠 返回大厅</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+let mode='custom',jobId=null,script=null,images=[],bgmPath='',manual={},currentEditorTab=0;
+
+function switchMode(m,el){
+  mode=m;
+  document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-custom').classList.toggle('hidden',m!=='custom');
+  document.getElementById('panel-blind').classList.toggle('hidden',m!=='blind');
+}
+
+function switchEditorTab(idx,el){
+  // 切换前同步数据
+  if(currentEditorTab===0 && idx===1){
+    syncVisualToJSON();
+    document.getElementById('jsonEditor').value=JSON.stringify(script,null,4);
+  } else if(currentEditorTab===1 && idx===0){
+    try{
+      let newData=JSON.parse(document.getElementById('jsonEditor').value);
+      sanitizeJSONPaths(newData);
+      script=newData;
+      buildVisualEditor();
+    }catch(e){
+      alert('JSON 格式错误，请先修复！\n'+e.message);
+      return;
+    }
+  }
+  currentEditorTab=idx;
+  document.querySelectorAll('.editor-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('editorVisual').classList.toggle('hidden',idx!==0);
+  document.getElementById('editorJSON').classList.toggle('hidden',idx!==1);
+}
+
+function syncVisualToJSON(){
+  script.title=document.getElementById('eTitle').value;
+  script.desc=document.getElementById('eDesc').value;
+  document.querySelectorAll('.spk').forEach(i=>{if(script.nodes[i.dataset.id]) script.nodes[i.dataset.id].speaker=i.value;});
+  document.querySelectorAll('.txt').forEach(i=>{if(script.nodes[i.dataset.id]) script.nodes[i.dataset.id].text=i.value;});
+}
+
+function sanitizeJSONPaths(data){
+  if(data.bgm && data.bgm.startsWith('assets_')) data.bgm=data.bgm.replace('assets_','assets/',1);
+  for(let node of Object.values(data.nodes||{})){
+    if(typeof node!=='object') continue;
+    if(node.bg_image && node.bg_image.startsWith('assets_')) node.bg_image=node.bg_image.replace('assets_','assets/',1);
+    if(node.avatar_image && node.avatar_image.startsWith('assets_')) node.avatar_image=node.avatar_image.replace('assets_','assets/',1);
+    if(node.characters && typeof node.characters==='object'){
+      for(let pos of ['left','center','right']){
+        if(node.characters[pos] && node.characters[pos].startsWith('assets_')) node.characters[pos]=node.characters[pos].replace('assets_','assets/',1);
+      }
+    }
+  }
+}
+
+function onBGM(inp){
+  let f=inp.files[0]; if(!f)return;
+  let fd=new FormData(); fd.append('file',f);
+  fetch('/api/ai/upload-temp',{method:'POST',body:fd})
+  .then(r=>r.json()).then(d=>{
+    if(d.success){bgmPath=d.path; document.getElementById('bgmLabel').textContent='✅ '+d.filename; document.getElementById('bgmLabel').style.color='#2E7D32'; document.getElementById('autoBGM').checked=false;}
+  });
+}
+
+function startGen(){
+  let prompt=document.getElementById('promptText').value.trim();
+  let genre=document.getElementById('genreSelect').value;
+  if(mode==='custom'&&!prompt){alert('请输入故事大纲');return;}
+  if(document.getElementById('autoBGM').checked&&!bgmPath) prompt+="\n\n【附加要求】：请在 JSON 的 'bgm' 字段中填写一个符合本故事氛围的英文音频文件名（如 assets/mysterious.mp3）。";
+  else prompt+="\n\n【附加要求】：JSON的 'bgm' 字段请直接留空。";
+
+  document.getElementById('step1').classList.add('hidden');
+  document.getElementById('stepLoading').classList.remove('hidden');
+  document.getElementById('streamConsole').textContent='';
+
+  fetch('/api/ai/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt,is_blind_box:mode==='blind',genre:genre})})
+  .then(r=>r.json()).then(d=>{jobId=d.job_id; poll(); });
+}
+
+function poll(){
+  fetch('/api/ai/status/'+jobId).then(r=>r.json()).then(d=>{
+    if(d.error){alert('失败：'+d.error); location.reload(); return;}
+    document.getElementById('pFill').style.width=d.progress+'%';
+    document.getElementById('pFill').textContent=d.progress+'%';
+    document.getElementById('pText').textContent=d.status_text;
+    // 流式控制台输出
+    if(d.stream_text){
+      const console=document.getElementById('streamConsole');
+      console.textContent=d.stream_text;
+      console.scrollTop=console.scrollHeight;
+    }
+    if(d.finished){
+      if(d.error){alert('失败：'+d.error); location.reload();}
+      else if(d.has_result){script=d.script; images=d.images||[]; showPreview();}
+    }else setTimeout(poll,1000);
+  });
+}
+
+function showPreview(){
+  document.getElementById('stepLoading').classList.add('hidden');
+  document.getElementById('step2').classList.remove('hidden');
+  currentEditorTab=0;
+  document.querySelectorAll('.editor-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  document.getElementById('editorVisual').classList.remove('hidden');
+  document.getElementById('editorJSON').classList.add('hidden');
+  buildVisualEditor();
+  document.getElementById('jsonEditor').value=JSON.stringify(script,null,4);
+}
+
+function buildVisualEditor(){
+  document.getElementById('eTitle').value=script.title||'';
+  document.getElementById('eDesc').value=script.desc||'';
+  let box=document.getElementById('sceneBox'); box.innerHTML='';
+  Object.entries(script.nodes||{}).forEach(([id,n])=>{
+    if(typeof n!=='object') return;
+    box.innerHTML+=`<div class="scene-box"><h4>🎬 ${id}</h4><div class="form-group"><label>发言人</label><input type="text" class="spk" data-id="${id}" value="${(n.speaker||'').replace(/"/g,'&quot;')}"></div><div class="form-group"><label>台词</label><textarea class="txt" data-id="${id}" rows="3">${n.text||''}</textarea></div></div>`;
+  });
+}
+
+// 根据JSON结构判断图片类型（与后端 _get_img_type 逻辑一致）
+function getImgType(imgPath){
+  for(let node of Object.values(script.nodes||{})){
+    if(typeof node!=='object') continue;
+    if(node.bg_image===imgPath) return 'background';
+    if(node.avatar_image===imgPath) return 'avatar';
+    if(node.characters && typeof node.characters==='object'){
+      for(let pos of ['left','center','right']){
+        if(node.characters[pos]===imgPath) return 'character';
+      }
+    }
+  }
+  return 'unknown';
+}
+
+function toStep3(){
+  // 同步编辑器数据到 script
+  if(currentEditorTab===0){
+    syncVisualToJSON();
+  } else {
+    try{
+      let newData=JSON.parse(document.getElementById('jsonEditor').value);
+      sanitizeJSONPaths(newData);
+      script=newData;
+    }catch(e){
+      alert('JSON 格式错误，请先修复！\n'+e.message);
+      return;
+    }
+  }
+
+  // 重新提取图片列表（用户可能在JSON编辑器中修改了）
+  let imgSet=new Set();
+  for(let node of Object.values(script.nodes||{})){
+    if(typeof node!=='object') continue;
+    if(node.bg_image) imgSet.add(node.bg_image);
+    if(node.avatar_image) imgSet.add(node.avatar_image);
+    if(node.characters && typeof node.characters==='object'){
+      for(let pos of ['left','center','right']){
+        if(node.characters[pos]) imgSet.add(node.characters[pos]);
+      }
+    }
+  }
+  images=Array.from(imgSet);
+
+  document.getElementById('step2').classList.add('hidden');
+  document.getElementById('step3').classList.remove('hidden');
+
+  // 用 JSON 结构分类图片（而非文件名猜测）
+  let cats={bg:[],char:[],avatar:[],unknown:[]};
+  images.forEach(p=>{
+    let t=getImgType(p);
+    let name=p.split('/').pop();
+    if(t==='background') cats.bg.push(name);
+    else if(t==='character') cats.char.push(name);
+    else if(t==='avatar') cats.avatar.push(name);
+    else cats.unknown.push(name);
+  });
+
+  let h=`<div style="font-size:16px;font-weight:bold;color:#1565C0;margin-bottom:15px">📦 共需 ${images.length} 张美术资产 ${images.length>20?'<span style="color:#E53935">（超20张限制！）</span>':''}</div>`;
+  if(cats.bg.length){h+='<div style="margin-bottom:8px"><span style="color:#2E7D32;font-weight:bold">🏞️ 场景背景：</span>';cats.bg.forEach(n=>h+=`<span class="tag tag-bg">${n}</span>`);h+='</div>';}
+  if(cats.char.length){h+='<div style="margin-bottom:8px"><span style="color:#E65100;font-weight:bold">🧍 角色立绘：</span>';cats.char.forEach(n=>h+=`<span class="tag tag-char">${n}</span>`);h+='</div>';}
+  if(cats.avatar.length){h+='<div style="margin-bottom:8px"><span style="color:#6A1B9A;font-weight:bold">👤 角色头像：</span>';cats.avatar.forEach(n=>h+=`<span class="tag tag-avatar">${n}</span>`);h+='</div>';}
+  if(cats.unknown.length){h+='<div style="margin-bottom:8px"><span style="color:#37474F;font-weight:bold">❓ 其他资源：</span>';cats.unknown.forEach(n=>h+=`<span class="tag tag-unknown">${n}</span>`);h+='</div>';}
+  document.getElementById('imgSum').innerHTML=h;
+
+  if(mode==='blind'){document.getElementById('blindTip').classList.remove('hidden');document.getElementById('manualBox').classList.add('hidden');}
+  else{document.getElementById('blindTip').classList.add('hidden');document.getElementById('manualBox').classList.remove('hidden');buildManual();}
+}
+
+function buildManual(){
+  let box=document.getElementById('upList'); box.innerHTML='';
+  images.forEach(p=>{
+    let n=p.split('/').pop();
+    let id='st-'+btoa(unescape(encodeURIComponent(p))).replace(/=/g,'');
+    box.innerHTML+=`<div class="upload-row"><span>🖼️ ${n}</span><input type="file" accept="image/*" style="display:none" onchange="upImg(this,'${p.replace(/'/g,"\\'")}','${id}')"><button onclick="this.previousElementSibling.click()" style="padding:6px 15px;background:#CFD8DC;border:none;border-radius:6px;cursor:pointer;font-weight:bold">📁 浏览</button><span class="upload-status" id="${id}">尚未选择</span></div>`;
+  });
+}
+
+function upImg(inp,path,sid){
+  let f=inp.files[0]; if(!f)return;
+  let fd=new FormData(); fd.append('file',f);
+  fetch('/api/ai/upload-temp',{method:'POST',body:fd})
+  .then(r=>r.json()).then(d=>{
+    if(d.success){manual[path]=d.path; let el=document.getElementById(sid); el.textContent='✅ '+d.filename; el.classList.add('done');}
+  });
+}
+
+function toggleManual(){document.getElementById('upList').style.display=document.getElementById('artMode').value==='manual'?'block':'none';}
+function back2(){document.getElementById('step3').classList.add('hidden');document.getElementById('step2').classList.remove('hidden');}
+
+function pack(){
+  let artMode=document.getElementById('artMode')?document.getElementById('artMode').value:'ai';
+  document.getElementById('step3').classList.add('hidden');
+  document.getElementById('stepImg').classList.remove('hidden');
+  fetch('/api/ai/generate-images',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({job_id:jobId,story_data:script,images:images,bgm_path:bgmPath,local_copies:artMode==='manual'?manual:{}})})
+  .then(r=>r.json()).then(d=>{
+    if(d.error){alert(d.error);return;}
+    if(!d.job_id){showDone(d.story_name,d.message);return;}
+    pollImg(d.job_id);
+  });
+}
+
+function pollImg(jid){
+  fetch('/api/ai/status/'+jid).then(r=>r.json()).then(d=>{
+    document.getElementById('iFill').style.width=d.progress+'%';
+    document.getElementById('iFill').textContent=d.progress+'%';
+    document.getElementById('iText').textContent=d.status_text;
+    if(d.finished){
+      if(d.error) alert('生成失败：'+d.error);
+      if(d.warning) alert('⚠️ 图片生成警告：'+d.warning);
+      fetch('/api/ai/finalize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({job_id:jid})})
+      .then(r=>r.json()).then(res=>{
+        if(res.error) alert('完成时出错：'+res.error);
+        else showDone(res.story_name,`共 ${res.scene_count} 个场景，${res.asset_count} 个资源`);
+      });
+    }else setTimeout(()=>pollImg(jid),1500);
+  });
+}
+
+function showDone(name,msg){
+  document.getElementById('stepImg').classList.add('hidden');
+  document.getElementById('stepDone').classList.remove('hidden');
+  document.getElementById('doneMsg').innerHTML=`游戏项目 <strong>${name}</strong> 构建完毕！<br>${msg}`;
+}
+</script>
+</body>
+</html>

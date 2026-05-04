@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>{{ story_data.title }}</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    .player-container {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+        background: #000;
+    }
+
+    #bgLayer {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background-size: cover;
+        background-position: center;
+        transition: opacity 0.35s;
+    }
+
+    .char-layer {
+        position: absolute;
+        bottom: 0;
+        height: 65%;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        transition: opacity 0.35s;
+        pointer-events: none;
+    }
+    .char-layer img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    #charLeft { left: 5%; max-width: 30%; }
+    #charCenter { left: 50%; transform: translateX(-50%); max-width: 35%; }
+    #charRight { right: 5%; max-width: 30%; }
+
+    .ui-layer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 15px 20px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        transition: opacity 0.35s;
+    }
+
+    .choices-container {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .choice-btn {
+        flex: 1;
+        min-width: 140px;
+        max-width: 200px;
+        padding: 10px 15px;
+        background: rgba(245, 245, 245, 0.95);
+        border: 2px solid #78909C;
+        border-radius: 8px;
+        color: #212121;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+        min-height: 44px;
+    }
+    .choice-btn:hover, .choice-btn:active {
+        background: #E3F2FD;
+        border-color: #1E88E5;
+        color: #1E88E5;
+    }
+
+    .text-panel {
+        width: 100%;
+        max-width: 100%;
+        background: rgba(245, 245, 245, 0.95);
+        border: 2px solid rgba(150, 150, 150, 0.7);
+        border-radius: 10px;
+        padding: 12px 15px;
+        display: flex;
+        gap: 12px;
+        min-height: 100px;
+        cursor: pointer;
+    }
+
+    .avatar-box {
+        width: 70px;
+        height: 70px;
+        border: 2px solid #90A4AE;
+        border-radius: 6px;
+        background: #FFF;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+    .avatar-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .text-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+    }
+
+    .speaker-name {
+        font-size: 16px;
+        font-weight: 900;
+        color: #1565C0;
+        min-height: 22px;
+    }
+
+    .dialogue-text {
+        font-size: 15px;
+        font-weight: bold;
+        color: #212121;
+        line-height: 1.4;
+        white-space: pre-wrap;
+    }
+
+    .click-hint {
+        font-size: 11px;
+        color: #90A4AE;
+        text-align: right;
+        margin-top: 3px;
+        display: none;
+    }
+    .click-hint.show { display: block; }
+
+    .back-btn {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        padding: 8px 15px;
+        background: rgba(211, 47, 47, 0.85);
+        color: white;
+        border: 2px solid rgba(255,255,255,0.6);
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 20;
+        font-size: 14px;
+    }
+
+    .fade-overlay {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: #000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+        z-index: 50;
+    }
+
+    #bgmAudio {
+        display: none;
+    }
+</style>
+</head>
+<body>
+<div class="player-container" id="player">
+    <div class="fade-overlay" id="fadeOverlay"></div>
+    <div id="bgLayer"></div>
+
+    <div class="char-layer" id="charLeft"><img src="" alt=""></div>
+    <div class="char-layer" id="charCenter"><img src="" alt=""></div>
+    <div class="char-layer" id="charRight"><img src="" alt=""></div>
+
+    <button class="back-btn" onclick="location.href='/'"> 退出大厅</button>
+
+    <div class="ui-layer" id="uiLayer">
+        <div class="choices-container" id="choicesBox"></div>
+
+        <div class="text-panel" id="textPanel" onclick="onPanelClick()">
+            <div class="avatar-box" id="avatarBox">
+                <img src="" alt="">
+            </div>
+            <div class="text-content">
+                <div class="speaker-name" id="speakerName"></div>
+                <div class="dialogue-text" id="dialogueText"></div>
+                <div class="click-hint" id="clickHint"> 点击继续</div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="bgmAudio" loop></audio>
+</div>
+
+<script>
+const STORY_NAME = "{{ story_name }}";
+const storyData = {{ story_data | tojson }};
+let currentNode = null;
+let currentNodeId = null;
+let isAnimating = false;
+let typeInterval = null;
+let typingDone = false;
+
+function init() {
+    const startId = storyData.start_node || 'scene_1';
+    loadNode(startId);
+
+    // BGM
+    if (storyData.bgm) {
+        const audio = document.getElementById('bgmAudio');
+        audio.src = `/api/story/${STORY_NAME}/asset?path=${encodeURIComponent(storyData.bgm)}`;
+        audio.volume = 0.5;
+        document.addEventListener('click', function tryPlay() {
+            audio.play().catch(() => {});
+            document.removeEventListener('click', tryPlay);
+        }, { once: true });
+    }
+}
+
+function loadNode(nodeId) {
+    if (isAnimating) return;
+    const node = storyData.nodes[nodeId];
+    if (!node) return;
+
+    isAnimating = true;
+    currentNode = node;
+    currentNodeId = nodeId;
+
+    // 隐藏UI层
+    document.getElementById('uiLayer').style.opacity = '0';
+
+    // 淡出视觉层
+    const overlay = document.getElementById('fadeOverlay');
+    overlay.style.opacity = '1';
+
+    setTimeout(() => {
+        updateVisuals(node);
+        // 淡入视觉层
+        overlay.style.opacity = '0';
+        // 延迟显示UI层
+        setTimeout(() => {
+            document.getElementById('uiLayer').style.opacity = '1';
+            isAnimating = false;
+        }, 150);
+    }, 250);
+}
+
+function updateVisuals(node) {
+    // 背景
+    const bgLayer = document.getElementById('bgLayer');
+    if (node.bg_image) {
+        bgLayer.style.backgroundImage = `url(/api/story/${STORY_NAME}/asset?path=${encodeURIComponent(node.bg_image)})`;
+    } else {
+        bgLayer.style.backgroundImage = '';
+    }
+
+    // 立绘
+    const chars = Object.assign({}, node.characters || {});
+    if (node.char_image && !chars.center) {
+        chars.center = node.char_image;
+    }
+
+    ['left', 'center', 'right'].forEach(pos => {
+        const layer = document.getElementById('char' + pos.charAt(0).toUpperCase() + pos.slice(1));
+        const img = layer.querySelector('img');
+        if (chars[pos]) {
+            img.src = `/api/story/${STORY_NAME}/asset?path=${encodeURIComponent(chars[pos])}`;
+            layer.style.display = 'flex';
+        } else {
+            img.src = '';
+            layer.style.display = 'none';
+        }
+    });
+
+    // 头像
+    const avatarBox = document.getElementById('avatarBox');
+    const avatarImg = avatarBox.querySelector('img');
+    if (node.avatar_image) {
+        avatarImg.src = `/api/story/${STORY_NAME}/asset?path=${encodeURIComponent(node.avatar_image)}`;
+        avatarBox.style.display = 'block';
+    } else {
+        avatarBox.style.display = 'none';
+    }
+
+    // 发言人
+    const speakerName = document.getElementById('speakerName');
+    if (node.speaker && node.speaker.trim()) {
+        speakerName.textContent = `【${node.speaker}】`;
+        speakerName.style.display = 'block';
+    } else {
+        speakerName.style.display = 'none';
+    }
+
+    // 打字机效果文本
+    typeText(node.text || '');
+
+    // 选项
+    const choicesBox = document.getElementById('choicesBox');
+    choicesBox.innerHTML = '';
+
+    if (node.choices && node.choices.length > 0) {
+        node.choices.forEach(choice => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.textContent = choice.text || '继续';
+            btn.onclick = () => {
+                if (choice.next_node) loadNode(choice.next_node);
+            };
+            choicesBox.appendChild(btn);
+        });
+    } else {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = '剧终';
+        btn.onclick = () => location.href = '/';
+        choicesBox.appendChild(btn);
+    }
+}
+
+function typeText(text) {
+    const el = document.getElementById('dialogueText');
+    const hint = document.getElementById('clickHint');
+    el.textContent = '';
+    hint.classList.remove('show');
+    typingDone = false;
+    if (typeInterval) clearInterval(typeInterval);
+
+    let i = 0;
+    typeInterval = setInterval(() => {
+        if (i < text.length) {
+            el.textContent += text[i];
+            i++;
+        } else {
+            clearInterval(typeInterval);
+            typeInterval = null;
+            typingDone = true;
+            hint.classList.add('show');
+        }
+    }, 30);
+}
+
+function onPanelClick() {
+    if (isAnimating) return;
+    if (typeInterval) {
+        // 跳过打字，直接显示全文
+        clearInterval(typeInterval);
+        typeInterval = null;
+        typingDone = true;
+        document.getElementById('dialogueText').textContent = currentNode.text || '';
+        document.getElementById('clickHint').classList.add('show');
+    } else if (typingDone) {
+        // 文本已显示完毕，如果只有一个选项则自动前进
+        const choices = document.querySelectorAll('.choice-btn');
+        if (choices.length === 1) {
+            choices[0].click();
+        }
+    }
+}
+
+// 键盘支持
+document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        onPanelClick();
+    }
+});
+
+init();
+</script>
+</body>
+</html>
